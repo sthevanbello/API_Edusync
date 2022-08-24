@@ -154,7 +154,7 @@ namespace ApiMaisEventos.Controllers
         /// </summary>
         /// <returns>listaEventosComParticipantes</returns>
         [HttpGet]
-        [Route("Participantes")]
+        [Route("Usuarios")]
         public IActionResult GetEventosComParticipantes()
         {
             try
