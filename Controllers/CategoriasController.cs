@@ -5,27 +5,24 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Net.Http.Headers;
 
 namespace ApiMaisEventos.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsuariosController : ControllerBase
+    public class CategoriasController : ControllerBase
     {
-        // Criar string de conexão com o banco de dados
-        // private readonly string connectionString = @"data source=NOTE_STHEVAN\SQLEXPRESS; Integrated Security = true; Initial Catalog = Mais_Eventos";
         private readonly string connectionString = @"data source=NOTE_STHEVAN\SQLEXPRESS; User Id=sa; Password=Admin1234; Initial Catalog = Mais_Eventos";
-
         /// <summary>
-        /// Cadastra usuário no banco de dados
+        /// Insere no banco uma nova categoria
         /// </summary>
-        /// <param name="usuario"> Dados do usuário novo</param>
-        /// <returns>Retorna os dados do usuário se tudo estiver correto</returns>
-        // POST - Cadastrar
+        /// <param name="categoria">Categoria nova a ser inserida</param>
+        /// <returns>Retorna os dados da categoria nova</returns>
+        // POST
         [HttpPost]
-        public IActionResult CadastrarUsuario(Usuario usuario)
+        public IActionResult PostCategoria(Categoria categoria)
         {
+
             // Open a data base connection
 
             try
@@ -34,22 +31,20 @@ namespace ApiMaisEventos.Controllers
                 {
                     connection.Open();
 
-                    string script = @"INSERT INTO TB_USUARIOS (Nome, Email, Senha)
+                    string script = @"INSERT INTO TB_CATEGORIAS (NomeCategoria)
                                     VALUES
-                                    (@Nome, @Email, @Senha)";
+                                    (@NomeCategoria)";
 
                     // Execução no banco
                     using (SqlCommand cmd = new SqlCommand(script, connection))
                     {
                         // Declarar as variáveis por parâmetros
-                        cmd.Parameters.Add("Nome", SqlDbType.NVarChar).Value = usuario.Nome;
-                        cmd.Parameters.Add("Email", SqlDbType.NVarChar).Value = usuario.Email;
-                        cmd.Parameters.Add("Senha", SqlDbType.NVarChar).Value = usuario.Senha;
+                        cmd.Parameters.Add("NomeCategoria", SqlDbType.NVarChar).Value = categoria.NomeCategoria;
                         cmd.CommandType = CommandType.Text;
                         cmd.ExecuteNonQuery();
                     }
                 }
-                return Ok(usuario);
+                return Ok(categoria);
             }
             catch (InvalidOperationException ex)
             {
@@ -76,57 +71,40 @@ namespace ApiMaisEventos.Controllers
                 });
             }
         }
-        // GET - Listar
+
         /// <summary>
-        /// Lista todos os usuários da aplicação com foreach e while
+        /// Listar todas as categorias existente no banco
         /// </summary>
-        /// <returns>Lista de todos os usuários do banco de dados</returns>
+        /// <returns></returns>
         [HttpGet]
-        public IActionResult GetUsuarios()
+        public IActionResult GetCategorias()
         {
             try
             {
-                IList<Usuario> listaUsuarios = new List<Usuario>();
+                IList<Categoria> listaCategorias = new List<Categoria>();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string script = "SELECT * FROM TB_USUARIOS";
+                    string script = "SELECT * FROM TB_CATEGORIAS";
                     using (SqlCommand cmd = new SqlCommand(script, connection))
                     {
                         // Ler todos os itens da consulta com foreach e while
                         cmd.CommandType = CommandType.Text;
                         using (var result = cmd.ExecuteReader())
                         {
-                            #region foreach
-                            //foreach ( IDataRecord item in result)
-                            //{
-                            //    listaUsuarios.Add(new Usuario
-                            //    {
-                            //        Id = (int)item[0],
-                            //        Nome = (string)item[1],
-                            //        Email = (string)item[2],
-                            //        Senha = (string)item[3]
-                            //    });
-                            //}
-                            #endregion
-
-                            while (result.Read())
+                            while (result != null && result.HasRows && result.Read())
                             {
-                                listaUsuarios.Add(new Usuario
+                                listaCategorias.Add(new Categoria
                                 {
                                     Id = (int)result[0],
-                                    Nome = (string)result[1],
-                                    Email = (string)result[2],
-                                    Senha = (string)result[3]
+                                    NomeCategoria = (string)result[1],
                                 });
                             }
                         }
 
                     }
                 }
-                //IFormFile arquivo = new FormFile();
-                //string nomeArquivo = ContentDispositionHeaderValue.Parse(arquivo.ContentDisposition).FileName.Trim('"');
-                return Ok(listaUsuarios);
+                return Ok(listaCategorias);
             }
             catch (InvalidOperationException ex)
             {
@@ -154,15 +132,15 @@ namespace ApiMaisEventos.Controllers
             }
 
         }
+
         /// <summary>
-        /// Altera a tupla de acordo com o id fornecido como parâmetro
+        /// Atualiza a categoria de acordo com o id informado como parâmetro
         /// </summary>
-        /// <param name="id">Id do usuário</param>
-        /// <param name="usuario">Usuário a ser inserido</param>
-        /// <returns>Retorna os dados atualizados do usuário</returns>
-        // PUT - Alterar
+        /// <param name="categoria">Nome da categoria</param>
+        /// <param name="id">Id da categoria que será atualizada</param>
+        /// <returns>Retorna a categoria atualizada</returns>
         [HttpPut("{id}")]
-        public IActionResult PutUsuario(int id, Usuario usuario)
+        public IActionResult PutCategoria(Categoria categoria, int id)
         {
             try
             {
@@ -170,24 +148,19 @@ namespace ApiMaisEventos.Controllers
                 {
                     connection.Open();
 
-                    string script = @"UPDATE TB_USUARIOS 
-                                        SET Nome = @Nome, Email = @Email, Senha = @Senha 
-                                        WHERE Id = @id";
+                    string script = @"UPDATE TB_CATEGORIAS SET NomeCategoria = @NomeCategoria WHERE id = @id";
 
                     // Execução no banco
                     using (SqlCommand cmd = new SqlCommand(script, connection))
                     {
                         // Declarar as variáveis por parâmetros
-                        cmd.Parameters.Add("Id", SqlDbType.NVarChar).Value = id;
-                        cmd.Parameters.Add("Nome", SqlDbType.NVarChar).Value = usuario.Nome;
-                        cmd.Parameters.Add("Email", SqlDbType.NVarChar).Value = usuario.Email;
-                        cmd.Parameters.Add("Senha", SqlDbType.NVarChar).Value = usuario.Senha;
+                        cmd.Parameters.Add("Id", SqlDbType.Int).Value = id;
+                        cmd.Parameters.Add("NomeCategoria", SqlDbType.NVarChar).Value = categoria.NomeCategoria;
                         cmd.CommandType = CommandType.Text;
                         cmd.ExecuteNonQuery();
-                        usuario.Id = id;
                     }
                 }
-                return Ok(usuario);
+                return Ok(categoria);
             }
             catch (InvalidOperationException ex)
             {
@@ -214,14 +187,14 @@ namespace ApiMaisEventos.Controllers
                 });
             }
         }
+
         /// <summary>
-        /// Deleta um usuário de acordo com o id fornecido como parâmetro
+        /// Apaga uma categoria existente no banco
         /// </summary>
-        /// <param name="id">Id do usuário a ser deletado</param>
-        /// <returns>Retorna uma mensagem de exclusão</returns>
-        // Delete - Excluir
+        /// <param name="id">Id da categoria que será apagada</param>
+        /// <returns>Retorna uma mensagem informando que a categoria foi apagada</returns>
         [HttpDelete("{id}")]
-        public IActionResult DeleteUsuario(int id)
+        public IActionResult DeleteCategoria(int id)
         {
             try
             {
@@ -229,18 +202,21 @@ namespace ApiMaisEventos.Controllers
                 {
                     connection.Open();
 
-                    string script = @"DELETE FROM TB_USUARIOS WHERE Id = @id";
+                    string script = @"DELETE FROM TB_CATEGORIAS WHERE id = @id";
 
                     // Execução no banco
                     using (SqlCommand cmd = new SqlCommand(script, connection))
                     {
                         // Declarar as variáveis por parâmetros
-                        cmd.Parameters.Add("Id", SqlDbType.NVarChar).Value = id;
+                        cmd.Parameters.Add("Id", SqlDbType.Int).Value = id;
                         cmd.CommandType = CommandType.Text;
                         cmd.ExecuteNonQuery();
                     }
                 }
-                return Ok(new {msg = "Usuário excluído com sucesso"});
+                return Ok(new
+                {
+                    msg = "Categoria deletada com sucesso"
+                });
             }
             catch (InvalidOperationException ex)
             {
@@ -266,6 +242,7 @@ namespace ApiMaisEventos.Controllers
                     erro = ex.Message
                 });
             }
+
         }
     }
 }

@@ -5,27 +5,25 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Net.Http.Headers;
 
 namespace ApiMaisEventos.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsuariosController : ControllerBase
+    public class UsuariosEventosController : ControllerBase
     {
-        // Criar string de conexão com o banco de dados
-        // private readonly string connectionString = @"data source=NOTE_STHEVAN\SQLEXPRESS; Integrated Security = true; Initial Catalog = Mais_Eventos";
         private readonly string connectionString = @"data source=NOTE_STHEVAN\SQLEXPRESS; User Id=sa; Password=Admin1234; Initial Catalog = Mais_Eventos";
 
         /// <summary>
-        /// Cadastra usuário no banco de dados
+        /// Cadastra um relacionamento de usuário com relação a um evento
         /// </summary>
-        /// <param name="usuario"> Dados do usuário novo</param>
-        /// <returns>Retorna os dados do usuário se tudo estiver correto</returns>
-        // POST - Cadastrar
+        /// <param name="usuario">Usuário a ser cadastrado ao evento</param>
+        /// <param name="evento">Evento a ser cadastrado para o usuário</param>
+        /// <returns></returns>
         [HttpPost]
-        public IActionResult CadastrarUsuario(Usuario usuario)
+        public IActionResult PostUsuarioEvento(UsuarioEvento usuarioEvento)
         {
+
             // Open a data base connection
 
             try
@@ -34,22 +32,24 @@ namespace ApiMaisEventos.Controllers
                 {
                     connection.Open();
 
-                    string script = @"INSERT INTO TB_USUARIOS (Nome, Email, Senha)
+                    string script = @"INSERT INTO RL_USUARIO_EVENTO (UsuarioId, EventoId)
                                     VALUES
-                                    (@Nome, @Email, @Senha)";
+                                    (@UsuarioId, @EventoId)";
 
                     // Execução no banco
                     using (SqlCommand cmd = new SqlCommand(script, connection))
                     {
                         // Declarar as variáveis por parâmetros
-                        cmd.Parameters.Add("Nome", SqlDbType.NVarChar).Value = usuario.Nome;
-                        cmd.Parameters.Add("Email", SqlDbType.NVarChar).Value = usuario.Email;
-                        cmd.Parameters.Add("Senha", SqlDbType.NVarChar).Value = usuario.Senha;
+                        cmd.Parameters.Add("UsuarioId", SqlDbType.NVarChar).Value = usuarioEvento.UsuarioId;
+                        cmd.Parameters.Add("EventoId", SqlDbType.NVarChar).Value = usuarioEvento.EventoId;
                         cmd.CommandType = CommandType.Text;
                         cmd.ExecuteNonQuery();
                     }
                 }
-                return Ok(usuario);
+                return Ok(new
+                {
+                    msg = $"{usuarioEvento}"
+                });
             }
             catch (InvalidOperationException ex)
             {
@@ -76,57 +76,43 @@ namespace ApiMaisEventos.Controllers
                 });
             }
         }
-        // GET - Listar
         /// <summary>
-        /// Lista todos os usuários da aplicação com foreach e while
+        /// Lista a relação de usuários com eventos
         /// </summary>
-        /// <returns>Lista de todos os usuários do banco de dados</returns>
+        /// <returns>Retorna a lista de eventos associada aos usuários</returns>
         [HttpGet]
-        public IActionResult GetUsuarios()
+        public IActionResult GetUsuarioEvento()
         {
             try
             {
-                IList<Usuario> listaUsuarios = new List<Usuario>();
+                // Open a data base connection
+                List<UsuarioEvento> listaUsuarioEventos = new List<UsuarioEvento>();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string script = "SELECT * FROM TB_USUARIOS";
+
+                    string script = @"SELECT UE.UsuarioId, UE.EventoId FROM RL_USUARIO_EVENTO AS UE";
+
+                    // Execução no banco
                     using (SqlCommand cmd = new SqlCommand(script, connection))
                     {
-                        // Ler todos os itens da consulta com foreach e while
+                        // Declarar as variáveis por parâmetros
                         cmd.CommandType = CommandType.Text;
                         using (var result = cmd.ExecuteReader())
                         {
-                            #region foreach
-                            //foreach ( IDataRecord item in result)
-                            //{
-                            //    listaUsuarios.Add(new Usuario
-                            //    {
-                            //        Id = (int)item[0],
-                            //        Nome = (string)item[1],
-                            //        Email = (string)item[2],
-                            //        Senha = (string)item[3]
-                            //    });
-                            //}
-                            #endregion
-
-                            while (result.Read())
+                            while (result != null && result.HasRows && result.Read())
                             {
-                                listaUsuarios.Add(new Usuario
+                                listaUsuarioEventos.Add(new UsuarioEvento
                                 {
-                                    Id = (int)result[0],
-                                    Nome = (string)result[1],
-                                    Email = (string)result[2],
-                                    Senha = (string)result[3]
+                                    EventoId = (int)result["UsuarioId"],
+                                    UsuarioId = (int)result["EventoId"]
                                 });
                             }
                         }
 
                     }
                 }
-                //IFormFile arquivo = new FormFile();
-                //string nomeArquivo = ContentDispositionHeaderValue.Parse(arquivo.ContentDisposition).FileName.Trim('"');
-                return Ok(listaUsuarios);
+                return Ok(listaUsuarioEventos);
             }
             catch (InvalidOperationException ex)
             {
@@ -152,42 +138,40 @@ namespace ApiMaisEventos.Controllers
                     erro = ex.Message
                 });
             }
-
         }
+
         /// <summary>
-        /// Altera a tupla de acordo com o id fornecido como parâmetro
+        /// Atualiza a relação entre usuário e evento
         /// </summary>
-        /// <param name="id">Id do usuário</param>
-        /// <param name="usuario">Usuário a ser inserido</param>
-        /// <returns>Retorna os dados atualizados do usuário</returns>
-        // PUT - Alterar
+        /// <param name="usuarioEvento">Dados atualizados</param>
+        /// <param name="id">Id do relacionamento</param>
+        /// <returns>Retorna os dados atualizados</returns>
         [HttpPut("{id}")]
-        public IActionResult PutUsuario(int id, Usuario usuario)
+        public IActionResult PutUsuarioEvento(UsuarioEvento usuarioEvento, int id)
         {
+
+            // Open a data base connection
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    string script = @"UPDATE TB_USUARIOS 
-                                        SET Nome = @Nome, Email = @Email, Senha = @Senha 
-                                        WHERE Id = @id";
+                    string script = @"UPDATE RL_USUARIO_EVENTO SET UsuarioId = @UsuarioId, EventoId = @EventoId WHERE Id = @Id";
 
                     // Execução no banco
                     using (SqlCommand cmd = new SqlCommand(script, connection))
                     {
                         // Declarar as variáveis por parâmetros
-                        cmd.Parameters.Add("Id", SqlDbType.NVarChar).Value = id;
-                        cmd.Parameters.Add("Nome", SqlDbType.NVarChar).Value = usuario.Nome;
-                        cmd.Parameters.Add("Email", SqlDbType.NVarChar).Value = usuario.Email;
-                        cmd.Parameters.Add("Senha", SqlDbType.NVarChar).Value = usuario.Senha;
+                        cmd.Parameters.Add("Id", SqlDbType.Int).Value = id;
+                        cmd.Parameters.Add("UsuarioId", SqlDbType.NVarChar).Value = usuarioEvento.UsuarioId;
+                        cmd.Parameters.Add("EventoId", SqlDbType.NVarChar).Value = usuarioEvento.EventoId;
                         cmd.CommandType = CommandType.Text;
                         cmd.ExecuteNonQuery();
-                        usuario.Id = id;
                     }
                 }
-                return Ok(usuario);
+                return Ok(usuarioEvento);
             }
             catch (InvalidOperationException ex)
             {
@@ -214,33 +198,33 @@ namespace ApiMaisEventos.Controllers
                 });
             }
         }
-        /// <summary>
-        /// Deleta um usuário de acordo com o id fornecido como parâmetro
-        /// </summary>
-        /// <param name="id">Id do usuário a ser deletado</param>
-        /// <returns>Retorna uma mensagem de exclusão</returns>
-        // Delete - Excluir
         [HttpDelete("{id}")]
-        public IActionResult DeleteUsuario(int id)
+        public IActionResult DeleteUsuarioEvento(int id)
         {
+
+            // Open a data base connection
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    string script = @"DELETE FROM TB_USUARIOS WHERE Id = @id";
+                    string script = @"DELETE FROM RL_USUARIO_EVENTO WHERE Id = @Id";
 
                     // Execução no banco
                     using (SqlCommand cmd = new SqlCommand(script, connection))
                     {
                         // Declarar as variáveis por parâmetros
-                        cmd.Parameters.Add("Id", SqlDbType.NVarChar).Value = id;
+                        cmd.Parameters.Add("Id", SqlDbType.Int).Value = id;
                         cmd.CommandType = CommandType.Text;
                         cmd.ExecuteNonQuery();
                     }
                 }
-                return Ok(new {msg = "Usuário excluído com sucesso"});
+                return Ok(new
+                {
+                    msg = "Registro deletado com sucesso"
+                });
             }
             catch (InvalidOperationException ex)
             {
