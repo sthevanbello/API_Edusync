@@ -186,7 +186,7 @@ namespace ApiMaisEventos.Controllers
 	                                    E.Ativo AS 'Evento_Ativo'
                                     FROM TB_USUARIOS AS U
                                     INNER JOIN RL_USUARIO_EVENTO AS UE ON U.Id = UE.UsuarioId
-                                    LEFT JOIN TB_EVENTOS AS E ON E.Id = UE.EventoId
+                                    INNER JOIN TB_EVENTOS AS E ON E.Id = UE.EventoId
                                     INNER JOIN TB_CATEGORIAS AS C ON E.CategoriaId = C.Id";
 
                     using (SqlCommand cmd = new SqlCommand(script, connection))
