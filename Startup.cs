@@ -9,7 +9,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace ApiMaisEventos
@@ -30,7 +32,21 @@ namespace ApiMaisEventos
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "ApiMaisEventos", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo 
+                { 
+                    Title = "ApiMaisEventos", 
+                    Version = "v1",
+                    Description = "API Mais Eventos",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Sthevan Bello Alves",
+                        Url = new Uri("https://www.meusite.com.br"),
+                        Email = "sthevan@email.com"   
+                    }
+                });
+                // Adicionar confirgurações extras da documentação para ler o XML
+                var xmlArquivo = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlArquivo));
             });
         }
 
