@@ -12,6 +12,7 @@ namespace ApiMaisEventos.Interfaces
         public Usuario GetById(int id);
         public ICollection<Usuario> GetUsuariosComEventos();
         public Usuario Insert(Usuario usuario);
+        public Usuario InsertUsuarioComImagem(Usuario usuario);
         public bool Update(int id, Usuario usuario);
         public bool Delete(int id);
     }

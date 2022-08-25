@@ -1,6 +1,7 @@
 ﻿using ApiMaisEventos.Interfaces;
 using ApiMaisEventos.Models;
 using ApiMaisEventos.Repositories;
+using ApiMaisEventos.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -64,13 +65,23 @@ namespace ApiMaisEventos.Controllers
         /// <param name="usuario"></param>
         /// <returns>Retorna o usuário cadastrado</returns>
         [HttpPost("Imagem")]
-        public IActionResult CadastrarUsuarioComImagem([FromForm]Usuario usuario)
+        public IActionResult CadastrarUsuarioComImagem([FromForm]Usuario usuario, IFormFile arquivo)
         {
             // Open a data base connection
 
             try
             {
-                usuarioRepository.Insert(usuario);
+                #region Upload de Imagem
+                string[] extensoesPermitidas = { "jpg", "jpeg", "png", "svg" };
+                string uploadResultado = Upload.UploadFile(arquivo, extensoesPermitidas, "Images");
+                if (string.IsNullOrEmpty(uploadResultado))
+                {
+                    return BadRequest("Arquivo não encontrado ou extensão não permitida");
+                }
+                usuario.Imagem = uploadResultado;
+                #endregion
+
+                usuarioRepository.InsertUsuarioComImagem(usuario);
                 return Ok(usuario);
             }
             catch (InvalidOperationException ex)

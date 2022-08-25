@@ -36,7 +36,8 @@ namespace ApiMaisEventos.Repositories
                                 Id = (int)result[0],
                                 Nome = (string)result[1],
                                 Email = (string)result[2],
-                                Senha = (string)result[3]
+                                Senha = (string)result[3],
+                                Imagem = result[4].ToString()
                             });
                         }
                     }
@@ -174,6 +175,32 @@ namespace ApiMaisEventos.Repositories
                     cmd.Parameters.Add("Nome", SqlDbType.NVarChar).Value = usuario.Nome;
                     cmd.Parameters.Add("Email", SqlDbType.NVarChar).Value = usuario.Email;
                     cmd.Parameters.Add("Senha", SqlDbType.NVarChar).Value = usuario.Senha;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            return usuario;
+        }
+
+        public Usuario InsertUsuarioComImagem(Usuario usuario)
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                string script = @"INSERT INTO TB_USUARIOS 
+                                        (Nome, Email, Senha, Imagem)
+                                    VALUES
+                                        (@Nome, @Email, @Senha, @Imagem)";
+
+                // Execução no banco
+                using (SqlCommand cmd = new SqlCommand(script, connection))
+                {
+                    // Declarar as variáveis por parâmetros
+                    cmd.Parameters.Add("Nome", SqlDbType.NVarChar).Value = usuario.Nome;
+                    cmd.Parameters.Add("Email", SqlDbType.NVarChar).Value = usuario.Email;
+                    cmd.Parameters.Add("Senha", SqlDbType.NVarChar).Value = usuario.Senha;
+                    cmd.Parameters.Add("Imagem", SqlDbType.NVarChar).Value = usuario.Imagem;
                     cmd.CommandType = CommandType.Text;
                     cmd.ExecuteNonQuery();
                 }

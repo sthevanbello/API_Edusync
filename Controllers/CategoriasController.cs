@@ -15,7 +15,6 @@ namespace ApiMaisEventos.Controllers
     public class CategoriasController : ControllerBase
     {
         public ICategoriaRepository categoriaRepository = new CategoriaRepository();
-        private readonly string connectionString = @"data source=NOTE_STHEVAN\SQLEXPRESS; User Id=sa; Password=Admin1234; Initial Catalog = Mais_Eventos";
         /// <summary>
         /// Insere no banco uma nova categoria
         /// </summary>

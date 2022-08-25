@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
@@ -36,7 +37,7 @@ namespace ApiMaisEventos
                 { 
                     Title = "ApiMaisEventos", 
                     Version = "v1",
-                    Description = "API Mais Eventos",
+                    Description = "API Mais Eventos - Lista de exercícios",
                     Contact = new OpenApiContact
                     {
                         Name = "Sthevan Bello Alves",
@@ -65,6 +66,14 @@ namespace ApiMaisEventos
             app.UseRouting();
 
             app.UseAuthorization();
+
+            app.UseStaticFiles();
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "StaticFiles")),
+                RequestPath = "/StaticFiles"
+            });
 
             app.UseEndpoints(endpoints =>
             {
