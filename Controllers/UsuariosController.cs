@@ -1,4 +1,6 @@
-﻿using ApiMaisEventos.Models;
+﻿using ApiMaisEventos.Interfaces;
+using ApiMaisEventos.Models;
+using ApiMaisEventos.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -14,10 +16,8 @@ namespace ApiMaisEventos.Controllers
     [ApiController]
     public class UsuariosController : ControllerBase
     {
-        // Criar string de conexão com o banco de dados
-        // private readonly string connectionString = @"data source=NOTE_STHEVAN\SQLEXPRESS; Integrated Security = true; Initial Catalog = Mais_Eventos";
+        private IUsuarioRepository usuarioRepository = new UsuarioRepository();
         private readonly string connectionString = @"data source=NOTE_STHEVAN\SQLEXPRESS; User Id=sa; Password=Admin1234; Initial Catalog = Mais_Eventos";
-
         /// <summary>
         /// Cadastra usuário no banco de dados
         /// </summary>
@@ -31,26 +31,47 @@ namespace ApiMaisEventos.Controllers
 
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                usuarioRepository.Insert(usuario);
+                return Ok(usuario);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(500, new
                 {
-                    connection.Open();
+                    msg = "Falha na conexão",
+                    erro = ex.Message,
+                });
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new
+                {
+                    msg = "Falha na sintaxe do código SQL",
+                    erro = ex.Message,
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    msg = "Falha na definição do código",
+                    erro = ex.Message
+                });
+            }
+        }
+        /// <summary>
+        /// Cadastrar Usuário com imagem
+        /// </summary>
+        /// <param name="usuario"></param>
+        /// <returns>Retorna o usuário cadastrado</returns>
+        [HttpPost("Imagem")]
+        public IActionResult CadastrarUsuarioComImagem([FromForm]Usuario usuario)
+        {
+            // Open a data base connection
 
-                    string script = @"INSERT INTO TB_USUARIOS 
-                                        (Nome, Email, Senha)
-                                    VALUES
-                                        (@Nome, @Email, @Senha)";
-
-                    // Execução no banco
-                    using (SqlCommand cmd = new SqlCommand(script, connection))
-                    {
-                        // Declarar as variáveis por parâmetros
-                        cmd.Parameters.Add("Nome", SqlDbType.NVarChar).Value = usuario.Nome;
-                        cmd.Parameters.Add("Email", SqlDbType.NVarChar).Value = usuario.Email;
-                        cmd.Parameters.Add("Senha", SqlDbType.NVarChar).Value = usuario.Senha;
-                        cmd.CommandType = CommandType.Text;
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+            try
+            {
+                usuarioRepository.Insert(usuario);
                 return Ok(usuario);
             }
             catch (InvalidOperationException ex)
@@ -88,49 +109,7 @@ namespace ApiMaisEventos.Controllers
         {
             try
             {
-                IList<Usuario> listaUsuarios = new List<Usuario>();
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    string script = @"SELECT 
-                                        * 
-                                    FROM TB_USUARIOS";
-                    using (SqlCommand cmd = new SqlCommand(script, connection))
-                    {
-                        // Ler todos os itens da consulta com foreach e while
-                        cmd.CommandType = CommandType.Text;
-                        using (var result = cmd.ExecuteReader())
-                        {
-                            #region foreach
-                            //foreach ( IDataRecord item in result)
-                            //{
-                            //    listaUsuarios.Add(new Usuario
-                            //    {
-                            //        Id = (int)item[0],
-                            //        Nome = (string)item[1],
-                            //        Email = (string)item[2],
-                            //        Senha = (string)item[3]
-                            //    });
-                            //}
-                            #endregion
-
-                            while (result.Read())
-                            {
-                                listaUsuarios.Add(new Usuario
-                                {
-                                    Id = (int)result[0],
-                                    Nome = (string)result[1],
-                                    Email = (string)result[2],
-                                    Senha = (string)result[3]
-                                });
-                            }
-                        }
-
-                    }
-                }
-                //IFormFile arquivo = new FormFile();
-                //string nomeArquivo = ContentDispositionHeaderValue.Parse(arquivo.ContentDisposition).FileName.Trim('"');
-                return Ok(listaUsuarios);
+                return Ok(usuarioRepository.GetAll());
             }
             catch (InvalidOperationException ex)
             {
@@ -169,79 +148,7 @@ namespace ApiMaisEventos.Controllers
         {
             try
             {
-                IList<Usuario> listausuarios = new List<Usuario>();
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-
-                    string script = @"SELECT 
-	                                    U.Id AS 'Id_Usuario', 
-	                                    U.Nome AS 'Nome_Usuario', 
-	                                    U.Email AS 'Email_Usuario',
-                                        E.CategoriaId AS 'Id_Categoria', 
-	                                    C.NomeCategoria AS 'Nome_Categoria',
-                                        E.Id AS 'Id_Evento', 
-	                                    E.DataHora AS 'Data_Hora_Evento',
-	                                    E.Preco AS 'Preco_Evento',
-	                                    E.Ativo AS 'Evento_Ativo'
-                                    FROM TB_USUARIOS AS U
-                                    INNER JOIN RL_USUARIO_EVENTO AS UE ON U.Id = UE.UsuarioId
-                                    INNER JOIN TB_EVENTOS AS E ON E.Id = UE.EventoId
-                                    INNER JOIN TB_CATEGORIAS AS C ON E.CategoriaId = C.Id";
-
-                    using (SqlCommand cmd = new SqlCommand(script, connection))
-                    {
-                        // Ler todos os itens da consulta com while
-                        cmd.CommandType = CommandType.Text;
-                        using (var result = cmd.ExecuteReader())
-                        {
-                            while (result != null && result.HasRows && result.Read())
-                            {
-                                var evento = new Evento();
-                                if (!string.IsNullOrEmpty(result["Id_Evento"].ToString()))
-                                {
-                                    evento = new Evento
-                                    {
-                                        Id = (int)result["Id_Evento"],
-                                        DataHora = Convert.ToDateTime(result["Data_Hora_Evento"]),
-                                        Ativo = (bool)result["Evento_Ativo"],
-                                        Preco = (decimal)result["Preco_Evento"],
-                                        Categoria = new Categoria
-                                        {
-                                            Id = (int)result["Id_Categoria"],
-                                            NomeCategoria = result["Nome_Categoria"].ToString()
-                                        },
-                                        
-                                    };
-                                }
-
-                                if (!listausuarios.Any(x => x.Id == (int)result["Id_Usuario"]))
-                                {
-                                    var usuario = new Usuario
-                                    {
-                                        Id = (int)result["Id_Usuario"],
-                                        Nome = result["Nome_Usuario"].ToString(),
-                                        Email = result["Email_Usuario"].ToString(),
-                                        Eventos = new List<Evento>()
-                                    };
-
-                                    if ((usuario?.Id ?? 0) > 0)
-                                    {
-                                        usuario.Eventos.Add(evento);
-                                    }
-
-                                    listausuarios.Add(usuario);
-                                }
-                                else if ((evento?.Id ?? 0) > 0)
-                                {
-                                    listausuarios.FirstOrDefault(x => x.Id == (int)result["Id_Usuario"]).Eventos.Add(evento);
-                                }
-                            }
-                        }
-
-                    }
-                }
-                return Ok(listausuarios);
+                return Ok(usuarioRepository.GetUsuariosComEventos());
             }
             catch (InvalidOperationException ex)
             {
@@ -276,30 +183,14 @@ namespace ApiMaisEventos.Controllers
         /// <returns>Retorna os dados atualizados do usuário</returns>
         // PUT - Alterar
         [HttpPut("{id}")]
-        public IActionResult PutUsuario(int id, Usuario usuario)
+        public IActionResult UpdateUsuario(int id, Usuario usuario)
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                var usuarioById = usuarioRepository.GetById(id);
+                if (usuarioById is null)
                 {
-                    connection.Open();
-
-                    string script = @"UPDATE TB_USUARIOS 
-                                        SET Nome = @Nome, Email = @Email, Senha = @Senha 
-                                    WHERE Id = @id";
-
-                    // Execução no banco
-                    using (SqlCommand cmd = new SqlCommand(script, connection))
-                    {
-                        // Declarar as variáveis por parâmetros
-                        cmd.Parameters.Add("Id", SqlDbType.NVarChar).Value = id;
-                        cmd.Parameters.Add("Nome", SqlDbType.NVarChar).Value = usuario.Nome;
-                        cmd.Parameters.Add("Email", SqlDbType.NVarChar).Value = usuario.Email;
-                        cmd.Parameters.Add("Senha", SqlDbType.NVarChar).Value = usuario.Senha;
-                        cmd.CommandType = CommandType.Text;
-                        cmd.ExecuteNonQuery();
-                        usuario.Id = id;
-                    }
+                    return NotFound(new { msg = "Usuário não encontrado" });
                 }
                 return Ok(usuario);
             }
@@ -339,22 +230,11 @@ namespace ApiMaisEventos.Controllers
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                if (usuarioRepository.Delete(id))
                 {
-                    connection.Open();
-
-                    string script = @"DELETE FROM TB_USUARIOS WHERE Id = @id";
-
-                    // Execução no banco
-                    using (SqlCommand cmd = new SqlCommand(script, connection))
-                    {
-                        // Declarar as variáveis por parâmetros
-                        cmd.Parameters.Add("Id", SqlDbType.NVarChar).Value = id;
-                        cmd.CommandType = CommandType.Text;
-                        cmd.ExecuteNonQuery();
-                    }
+                    return Ok(new { msg = "Usuário excluído com sucesso" });
                 }
-                return Ok(new {msg = "Usuário excluído com sucesso"});
+                return NotFound(new { msg = "Usuário não encontrado" });
             }
             catch (InvalidOperationException ex)
             {
