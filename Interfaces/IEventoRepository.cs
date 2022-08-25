@@ -9,7 +9,7 @@ namespace ApiMaisEventos.Interfaces
         public Evento GetEventoById(int id);
         public ICollection<Evento> GetEventosComUsuarios();
         public Evento InsertEvento(Evento usuario);
-        public Evento UpdateEvento(int id, Evento usuario);
+        public bool UpdateEvento(int id, Evento usuario);
         public bool DeleteEvento(int id);
     }
 }

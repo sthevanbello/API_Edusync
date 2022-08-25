@@ -17,7 +17,6 @@ namespace ApiMaisEventos.Controllers
     public class UsuariosController : ControllerBase
     {
         private IUsuarioRepository usuarioRepository = new UsuarioRepository();
-        private readonly string connectionString = @"data source=NOTE_STHEVAN\SQLEXPRESS; User Id=sa; Password=Admin1234; Initial Catalog = Mais_Eventos";
         /// <summary>
         /// Cadastra usuário no banco de dados
         /// </summary>
@@ -138,13 +137,58 @@ namespace ApiMaisEventos.Controllers
 
         }
 
+        // GET - Listar
+        /// <summary>
+        /// Lista o usuários da aplicação de acordo com o id fornecido
+        /// </summary>
+        /// <param name="id">Id do usuário</param>
+        /// <returns>Lista de todos os usuários do banco de dados</returns>
+        [HttpGet("{id}")]
+        public IActionResult GetUsuarioById(int id)
+        {
+            try
+            {
+                var usuario = usuarioRepository.GetById(id);
+                if (usuario is null)
+                {
+                    return NotFound(new {msg = "Usuário não encontrado. Verificar se o Id está correto."});  
+                }
+                return Ok(usuario);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(500, new
+                {
+                    msg = "Falha na conexão",
+                    erro = ex.Message,
+                });
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new
+                {
+                    msg = "Falha na sintaxe do código SQL",
+                    erro = ex.Message,
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    msg = "Falha na definição do código",
+                    erro = ex.Message
+                });
+            }
+
+        }
+
         /// <summary>
         /// Listar os participantes com eventos contidos na base de dados
         /// </summary>
         /// <returns>listaEventosComParticipantes</returns>
         [HttpGet]
         [Route("Eventos")]
-        public IActionResult GetParticipantesComEventos()
+        public IActionResult GetUsuarioComEventos()
         {
             try
             {
@@ -187,10 +231,10 @@ namespace ApiMaisEventos.Controllers
         {
             try
             {
-                var usuarioById = usuarioRepository.GetById(id);
-                if (usuarioById is null)
+                var result = usuarioRepository.Update(id, usuario);
+                if (!result)
                 {
-                    return NotFound(new { msg = "Usuário não encontrado" });
+                    return NotFound(new { msg = "Usuário não encontrado. Verificar se o Id está correto." });
                 }
                 return Ok(usuario);
             }
@@ -234,7 +278,7 @@ namespace ApiMaisEventos.Controllers
                 {
                     return Ok(new { msg = "Usuário excluído com sucesso" });
                 }
-                return NotFound(new { msg = "Usuário não encontrado" });
+                return NotFound(new { msg = "Usuário não encontrado. Verificar se o Id está correto." });
             }
             catch (InvalidOperationException ex)
             {

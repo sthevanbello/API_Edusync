@@ -173,8 +173,12 @@ namespace ApiMaisEventos.Repositories
             return listaUsuarios;
         }
 
-        public UsuarioEvento Update(int id, UsuarioEvento usuarioEvento)
+        public bool Update(int id, UsuarioEvento usuarioEvento)
         {
+            if (GetById(id) is null)
+            {
+                return false;
+            } 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
@@ -192,7 +196,7 @@ namespace ApiMaisEventos.Repositories
                     cmd.ExecuteNonQuery();
                 }
             }
-            return usuarioEvento;
+            return true;
         }
         public bool Delete(int id)
         {

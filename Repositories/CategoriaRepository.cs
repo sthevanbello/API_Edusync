@@ -93,8 +93,12 @@ namespace ApiMaisEventos.Repositories
             return categoria;
         }
 
-        public Categoria Update(int id, Categoria categoria)
+        public bool Update(int id, Categoria categoria)
         {
+            if (GetCategoriaById(id) is null)
+            {
+                return false;
+            }
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
@@ -113,11 +117,11 @@ namespace ApiMaisEventos.Repositories
                     cmd.ExecuteNonQuery();
                 }
             }
-            return categoria;
+            return true;
         }
         public bool Delete(int id)
         {
-            if (GetCategoriaById(id) is null)
+            if (!(GetCategoriaById(id) is null))
             {
                 return false;
             }

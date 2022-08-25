@@ -16,14 +16,10 @@ namespace ApiMaisEventos.Controllers
     public class UsuariosEventosController : ControllerBase
     {
         IUsuarioEventoRepository usuarioEventoRepository = new UsuarioEventoRepository();
-        private readonly string connectionString = @"data source=NOTE_STHEVAN\SQLEXPRESS; User Id=sa; Password=Admin1234; Initial Catalog = Mais_Eventos";
-
         /// <summary>
         /// Cadastra um relacionamento de usuário com relação a um evento
         /// </summary>
-        /// <param name="usuario">Usuário a ser cadastrado ao evento</param>
-        /// <param name="evento">Evento a ser cadastrado para o usuário</param>
-        /// <returns></returns>
+        /// <param name="usuarioEvento">UsuárioEvento a ser cadastrado no banco</param>        /// <returns></returns>
         [HttpPost]
         public IActionResult PostUsuarioEvento(UsuarioEvento usuarioEvento)
         {
@@ -61,11 +57,11 @@ namespace ApiMaisEventos.Controllers
             }
         }
         /// <summary>
-        /// Lista a relação de usuários com eventos
+        /// Lista a relação de relacionamento de usuários com eventos
         /// </summary>
         /// <returns>Retorna a lista de eventos associada aos usuários</returns>
         [HttpGet]
-        public IActionResult GetUsuarioEvento()
+        public IActionResult GetUsuariosEventos()
         {
             try
             {
@@ -187,8 +183,12 @@ namespace ApiMaisEventos.Controllers
 
             try
             {
-                var usuarioEventoAtualizado = usuarioEventoRepository.Update(id, usuarioEvento);
-                return Ok(usuarioEventoAtualizado);
+                var eventoAtualizado = usuarioEventoRepository.Update(id, usuarioEvento);
+                if (!eventoAtualizado)
+                {
+                    return NotFound(new { msg = "Não foi encontrado um relacionamento de UsuarioEvento com o id informado. Verificar se o Id está correto." });
+                }
+                return Ok(usuarioEvento);
             }
             catch (InvalidOperationException ex)
             {

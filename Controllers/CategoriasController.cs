@@ -106,6 +106,10 @@ namespace ApiMaisEventos.Controllers
             try
             {
                 var categoria = categoriaRepository.GetCategoriaById(id);
+                if (categoria is null)
+                {
+                    return NotFound(new { msg = "Não foi encontrado um evento com o id informado" });
+                }
                 return Ok(categoria);
             }
             catch (InvalidOperationException ex)
@@ -146,7 +150,11 @@ namespace ApiMaisEventos.Controllers
             try
             {
                 var categoriaAtualizada = categoriaRepository.Update(id, categoria);
-                return Ok(categoriaAtualizada);
+                if (!categoriaAtualizada)
+                {
+                    return NotFound(new { msg = "Não foi encontrada uma categoria com o id informado" });
+                }
+                return Ok(categoria);
             }
             catch (InvalidOperationException ex)
             {
@@ -184,9 +192,9 @@ namespace ApiMaisEventos.Controllers
         {
             try
             {
-                if (categoriaRepository.Delete(id))
+                if (!categoriaRepository.Delete(id))
                 {
-                    return NotFound(new { msg = "Usuário não encontrado" });
+                    return NotFound(new { msg = "Categoria não foi deletada. Verificar se o Id está correto" });
                 }
                 return Ok(new
                 {

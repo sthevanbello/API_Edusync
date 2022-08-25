@@ -16,8 +16,6 @@ namespace ApiMaisEventos.Controllers
     public class EventosController : ControllerBase
     {
         IEventoRepository eventoRepository = new EventoRepository();
-        private readonly string connectionString = @"data source=NOTE_STHEVAN\SQLEXPRESS; User Id=sa; Password=Admin1234; Initial Catalog = Mais_Eventos";
-
         /// <summary>
         /// Cadastrar um evento
         /// </summary>
@@ -67,6 +65,48 @@ namespace ApiMaisEventos.Controllers
             {
                 var listaEventos = eventoRepository.GetEventosAll();
                 return Ok(listaEventos);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(500, new
+                {
+                    msg = "Falha na conexão",
+                    erro = ex.Message,
+                });
+            }
+            catch (SqlException ex)
+            {
+                return StatusCode(500, new
+                {
+                    msg = "Falha na sintaxe do código SQL",
+                    erro = ex.Message,
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    msg = "Falha na definição do código",
+                    erro = ex.Message
+                });
+            }
+        }
+        /// <summary>
+        /// Lista o evento de acordo com o id informado
+        /// </summary>
+        /// <param name="id">Id do evento a ser buscado</param>
+        /// <returns>Retorna o evento</returns>
+        [HttpGet("{id}")]
+        public IActionResult GetEventoById(int id)
+        {
+            try
+            {
+                var evento = eventoRepository.GetEventoById(id);
+                if (evento is null)
+                {
+                    return NotFound(new { msg = "Não foi encontrado um evento com o id informado. Verificar se o Id está correto" });
+                }
+                return Ok(evento);
             }
             catch (InvalidOperationException ex)
             {
@@ -146,7 +186,11 @@ namespace ApiMaisEventos.Controllers
             try
             {
                 var eventoAtualizado = eventoRepository.UpdateEvento(id, evento);
-                return Ok(eventoAtualizado);
+                if (!eventoAtualizado)
+                {
+                    return NotFound(new {msg = "Não foi encontrado um Evento com o id informado. Verificar se o Id está correto" });
+                }
+                return Ok(evento);
             }
             catch (InvalidOperationException ex)
             {
@@ -185,9 +229,9 @@ namespace ApiMaisEventos.Controllers
         {
             try
             {
-                if (eventoRepository.DeleteEvento(id))
+                if (!eventoRepository.DeleteEvento(id))
                 {
-                    return NotFound(new { msg = "Usuário não encontrado" });
+                    return NotFound(new { msg = "Evento não foi deletado. Verificar se o Id está correto" });
                 }
                 return Ok(new
                 {

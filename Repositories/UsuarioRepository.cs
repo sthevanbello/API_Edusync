@@ -181,9 +181,12 @@ namespace ApiMaisEventos.Repositories
             return usuario;
         }
 
-        public Usuario Update(int id, Usuario usuario)
+        public bool Update(int id, Usuario usuario)
         {
-
+            if (GetById(id) is null)
+            {
+                return false;
+            }
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
@@ -205,7 +208,7 @@ namespace ApiMaisEventos.Repositories
                     usuario.Id = id;
                 }
             }
-            return usuario;
+            return true;
         }
 
         public bool Delete(int id)

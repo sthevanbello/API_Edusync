@@ -64,7 +64,46 @@ namespace ApiMaisEventos.Repositories
 
         public Evento GetEventoById(int id)
         {
-            throw new System.NotImplementedException();
+            Evento evento = null;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                string script = @"SELECT 
+                                        E.Id AS 'Id_Evento',    
+                                        E.DataHora AS 'Data_Hora_Evento', 
+                                        E.Ativo AS 'Evento_Ativo', 
+                                        E.Preco AS 'Preco_Evento',
+                                        E.CategoriaId AS 'Id_Categoria', 
+                                        C.NomeCategoria AS 'Nome_Categoria'
+                                    FROM TB_EVENTOS AS E
+                                    JOIN TB_CATEGORIAS AS C ON E.CategoriaId = C.Id
+                                    WHERE E.Id = @Id" ;
+                using (SqlCommand cmd = new SqlCommand(script, connection))
+                {
+                    // Ler todos os itens da consulta com foreach e while
+                    cmd.Parameters.Add("Id", SqlDbType.Int).Value = id;
+                    cmd.CommandType = CommandType.Text;
+                    using (var result = cmd.ExecuteReader())
+                    {
+                        if (result != null && result.HasRows && result.Read())
+                        {
+                            evento = new Evento
+                            {
+                                Id = (int)result["Id_Evento"],
+                                DataHora = Convert.ToDateTime(result["Data_Hora_Evento"]),
+                                Ativo = (bool)result["Evento_Ativo"],
+                                Preco = (decimal)result["Preco_Evento"],
+                                Categoria = new Categoria
+                                {
+                                    Id = (int)result["Id_Categoria"],
+                                    NomeCategoria = result["Nome_Categoria"].ToString()
+                                }
+                            };
+                        }
+                    }
+                }
+            }
+            return evento;
         }
 
         public ICollection<Evento> GetEventosComUsuarios()
@@ -169,8 +208,13 @@ namespace ApiMaisEventos.Repositories
             return evento;
         }
 
-        public Evento UpdateEvento(int id, Evento evento)
+        public bool UpdateEvento(int id, Evento evento)
         {
+            if (GetEventoById(id) is null)
+            {
+                return false;
+            }
+
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
@@ -190,7 +234,7 @@ namespace ApiMaisEventos.Repositories
                     cmd.ExecuteNonQuery();
                 }
             }
-            return evento;
+            return true;
         }
         public bool DeleteEvento(int id)
         {
