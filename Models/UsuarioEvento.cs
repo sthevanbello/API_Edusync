@@ -12,9 +12,9 @@ namespace ApiMaisEventos.Models
         public Evento Evento { get; set; }
 
 
-        [Required(ErrorMessage = "Informar o Usuário associado é obrigatório")]
-        public int EventoId { get; set; }
         [Required(ErrorMessage = "Informar o Evento associado é obrigatório")]
         public int UsuarioId { get; set; }
+        [Required(ErrorMessage = "Informar o Usuário associado é obrigatório")]
+        public int EventoId { get; set; }
     }
 }

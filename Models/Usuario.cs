@@ -19,5 +19,7 @@ namespace ApiMaisEventos.Models
         public string Senha { get; set; }
 
         public IList<Evento> Eventos { get; set; }
+
+        public string Imagem { get; set; }
     }
 }
